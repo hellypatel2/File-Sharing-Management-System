@@ -1,0 +1,118 @@
+<html>
+    <head>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
+        <script>
+            function shareHandler(fileId, input_field_id) {
+                body={
+                    'file_id': fileId,
+                    'share_with_email': document.getElementById(input_field_id).value,
+                }
+                console.log(body)
+                $.ajax({
+                    "type": "POST",
+                    "url": "/share",
+                    "data": JSON.stringify(body),
+                    "contentType": "application/json",
+                    "success": function(data){
+                        console.log(data)
+                        alert("file shared")
+                        window.location.reload()
+                    },
+                    "error": function(xhr, status, errorThrown){
+                        if(xhr.status === 404){
+                            alert("Error in sharing file - "+ xhr.responseText)
+                        }
+                        else {
+                            alert("Error in sharing file - "+ xhr.status)
+                        }
+                    }
+                })
+            }
+
+            function removeAccess(shareId) {
+                $.ajax({
+                    "type": "DELETE",
+                    "url": "/share/"+shareId,
+                    "success": function(data){
+                        console.log(data)
+                        alert("access removed")
+                        window.location.reload()
+                    },
+                    "error": function(xhr, status, errorThrown){
+                        alert("Error in removing access")
+                    }
+                })
+            }
+        </script>
+    </head>
+
+    <body>
+        <a href=dashboard>Home</a>
+        <br/>
+        <a href="upload">Upload new file</a>
+        <br/>
+        <h2>Your uploaded files</h2>
+            <table class="table table-hover table-striped table-sm table-bordered">
+                <tr>
+                    <th>File</th>
+                    <th>Size(Bytes)</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                {% for file in my_files %}
+                    <tr>
+                        <td>{{file[3]}}</td>
+                        <td>{{file[5]}}</td>
+                        <td><a href="/file/{{file[0]}}">Download</td>
+                        <td>
+                            <input type="text" name="email" id="field-id-{{file[0]}}" placeholder="Enter email"/>
+                            <button class="btn btn-primary btn-sm" type="button" onclick="shareHandler({{file[0]}}, 'field-id-{{file[0]}}')">
+                                Share
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+        <br/><br/>
+        <h2>Files shared by you</h2>
+            <table class="table table-hover table-striped table-sm table-bordered">
+                <tr>
+                    <th>File</th>
+                    <th>Shared with</th>
+                    <th></th>
+                </tr>
+                {% for file in shared_by_me %}
+                    <tr>
+                        <td>{{file[3]}}</td>
+                        <td>{{user_map[file[9]][2]}}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="removeAccess({{file[6]}})">Remove access</button>
+                            <!-- <form method="DELETE" action="/share/{{file[0]}}">
+                            <a href="#" onclick="this.parentNode.submit();">Remove access</a>
+                            </form> -->
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+        <br/><br/>
+        <h2>Files shared with you</h2>
+            <table class="table table-hover table-striped table-sm table-bordered">
+                <tr>
+                    <th>File</th>
+                    <th>Size(Bytes)</th>
+                    <th>File owner</th>
+                    <th></th>
+                </tr>
+                {% for file in shared_with_me %}
+                    <tr>
+                        <td>{{file[3]}}</td>
+                        <td>{{file[5]}}</td>
+                        <td>{{user_map[file[8]][2]}}</td>
+                        <td><a href="/file/{{file[0]}}">Download</td>
+                    </tr>
+                {% endfor %}
+            </table>
+    </body>
+</html>
